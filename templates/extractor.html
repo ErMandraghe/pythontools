@@ -1,0 +1,481 @@
+{% extends "base.html" %}
+{% block title %}PDF Extractor — Python Tools{% endblock %}
+
+{% block extra_styles %}
+.back-link {
+  display: inline-flex; align-items: center; gap: 0.35rem;
+  font-family: var(--mono); font-size: 0.7rem; letter-spacing: 0.04em;
+  color: var(--muted); text-decoration: none; margin-bottom: 2rem;
+  transition: color 0.15s;
+}
+.back-link:hover { color: var(--text); }
+
+.page-label {
+  font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em;
+  text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem;
+}
+.page-title {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 300; letter-spacing: -0.02em; color: var(--text); margin-bottom: 0.4rem;
+}
+.page-title strong { font-weight: 600; }
+.page-sub { font-size: 0.88rem; color: var(--muted); font-weight: 300; margin-bottom: 2.5rem; }
+
+/* Two-column layout on wide screens */
+.layout {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 1.5rem;
+  align-items: start;
+}
+@media (max-width: 720px) {
+  .layout { grid-template-columns: 1fr; }
+}
+
+/* Upload card */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+}
+.card-inner { padding: 1.5rem; }
+
+/* Drop zone */
+.drop-zone {
+  border: 1.5px dashed var(--border-dark);
+  border-radius: 4px;
+  padding: 2.5rem 1.5rem;
+  text-align: center;
+  cursor: pointer;
+  position: relative;
+  transition: border-color 0.15s, background 0.15s;
+  user-select: none;
+}
+.drop-zone:hover, .drop-zone.dragover {
+  border-color: var(--accent);
+  background: var(--accent-bg);
+}
+.drop-zone input[type="file"] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.dz-icon  { font-size: 1.75rem; margin-bottom: 0.5rem; opacity: 0.6; }
+.dz-title { font-size: 0.88rem; font-weight: 500; color: var(--text); margin-bottom: 0.25rem; }
+.dz-sub   { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); }
+
+/* File row */
+.file-row {
+  display: none; align-items: center; gap: 0.6rem;
+  margin-top: 0.75rem; padding: 0.7rem 0.85rem;
+  background: var(--bg); border: 1px solid var(--border); border-radius: 4px;
+}
+.file-row.show { display: flex; }
+.file-row-name {
+  font-family: var(--mono); font-size: 0.75rem; color: var(--text);
+  flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+}
+.file-row-size { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); flex-shrink: 0; }
+.file-row-clear {
+  background: none; border: none; color: var(--muted); cursor: pointer;
+  font-size: 0.8rem; padding: 0; flex-shrink: 0; transition: color 0.15s; line-height: 1;
+}
+.file-row-clear:hover { color: var(--danger); }
+
+/* Extract button */
+.btn-extract {
+  display: none; width: 100%; margin-top: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--text); color: var(--bg);
+  font-family: var(--mono); font-size: 0.78rem; font-weight: 500;
+  letter-spacing: 0.06em;
+  border: none; border-radius: 4px; cursor: pointer;
+  transition: opacity 0.15s, background 0.15s;
+}
+.btn-extract.show { display: block; }
+.btn-extract:hover:not(:disabled) { background: #333; }
+.btn-extract:disabled { opacity: 0.35; cursor: not-allowed; }
+
+/* Progress */
+.progress-wrap {
+  display: none; margin-top: 0.75rem;
+  border: 1px solid var(--border); border-radius: 4px; padding: 1rem;
+  background: var(--bg);
+}
+.progress-wrap.show { display: block; }
+.prog-row { display: flex; justify-content: space-between; margin-bottom: 0.5rem; }
+.prog-label { font-family: var(--mono); font-size: 0.68rem; color: var(--muted); }
+.prog-pct   { font-family: var(--mono); font-size: 0.68rem; color: var(--text); font-weight: 500; }
+.prog-track { height: 3px; background: var(--border); border-radius: 99px; overflow: hidden; }
+.prog-fill  {
+  height: 100%; width: 0%;
+  background: var(--accent);
+  border-radius: 99px;
+  transition: width 0.4s cubic-bezier(.22,1,.36,1);
+}
+.prog-sub { display: flex; justify-content: space-between; margin-top: 0.4rem; }
+.prog-step { font-family: var(--mono); font-size: 0.64rem; color: var(--muted); }
+.prog-time { font-family: var(--mono); font-size: 0.64rem; color: var(--muted); }
+
+/* Status */
+.status-box {
+  display: none; margin-top: 0.75rem; padding: 0.75rem 0.9rem;
+  border-radius: 4px; font-size: 0.82rem; line-height: 1.5;
+  font-family: var(--mono);
+}
+.status-box.ok  { display: block; background: var(--success-bg); border: 1px solid #BBF0D2; color: var(--success); }
+.status-box.err { display: block; background: var(--danger-bg);  border: 1px solid #FECACA; color: var(--danger); }
+
+/* Download button */
+.btn-download {
+  display: none; width: 100%; margin-top: 0.6rem;
+  padding: 0.75rem 1rem;
+  background: var(--success-bg); color: var(--success);
+  border: 1px solid #BBF0D2;
+  font-family: var(--mono); font-size: 0.78rem; font-weight: 500;
+  letter-spacing: 0.04em;
+  border-radius: 4px; cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-download.show { display: block; }
+.btn-download:hover { background: #D5F5E7; }
+
+/* Info sidebar */
+.info-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 1.25rem 1.4rem;
+}
+.info-card h3 {
+  font-family: var(--mono); font-size: 0.68rem;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  color: var(--muted); margin-bottom: 1rem;
+}
+.info-card ul { list-style: none; }
+.info-card li {
+  font-size: 0.82rem; color: var(--muted); font-weight: 300;
+  padding: 0.3rem 0; border-bottom: 1px solid var(--border);
+  display: flex; gap: 0.5rem; align-items: baseline;
+}
+.info-card li:last-child { border-bottom: none; }
+.info-card li::before { content: '–'; color: var(--border-dark); flex-shrink: 0; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.page-header { animation: fadeUp 0.3s ease both; }
+.layout      { animation: fadeUp 0.3s 0.07s ease both; opacity: 0; animation-fill-mode: both; }
+{% endblock %}
+
+{% block content %}
+<a href="/" class="back-link nav-link">← home</a>
+
+<div class="page-header">
+  <p class="page-label">Tool 01</p>
+  <h1 class="page-title"><strong>PDF</strong> Text Extractor</h1>
+  <p class="page-sub">Upload a PDF — server extracts all text and returns a clean .txt file.</p>
+</div>
+
+<div class="layout">
+
+  <div class="card">
+    <div class="card-inner">
+
+      <!-- Drop / click zone -->
+      <div class="drop-zone" id="dropZone">
+        <input type="file" id="fileInput" accept=".pdf" />
+        <div class="dz-icon">↑</div>
+        <div class="dz-title">Drop PDF here or click to browse</div>
+        <div class="dz-sub">PDF only · max 100 MB</div>
+      </div>
+
+      <!-- Selected file -->
+      <div class="file-row" id="fileRow">
+        <span class="file-row-name" id="fileNameEl"></span>
+        <span class="file-row-size" id="fileSizeEl"></span>
+        <button class="file-row-clear" id="clearBtn" title="Remove">✕</button>
+      </div>
+
+      <!-- Extract -->
+      <button class="btn-extract" id="extractBtn">Extract text →</button>
+
+      <!-- Progress -->
+      <div class="progress-wrap" id="progressWrap">
+        <div class="prog-row">
+          <span class="prog-label" id="progLabel">Uploading…</span>
+          <span class="prog-pct"   id="progPct">0%</span>
+        </div>
+        <div class="prog-track"><div class="prog-fill" id="progFill"></div></div>
+        <div class="prog-sub">
+          <span class="prog-step" id="progStep"></span>
+          <span class="prog-time" id="progTime">0s</span>
+        </div>
+      </div>
+
+      <!-- Status -->
+      <div class="status-box" id="statusBox"></div>
+
+      <!-- Download -->
+      <button class="btn-download" id="downloadBtn">↓ Download .txt file</button>
+
+    </div>
+  </div>
+
+  <!-- Sidebar info -->
+  <div class="info-card">
+    <h3>How it works</h3>
+    <ul>
+      <li>PDF sent to server via upload</li>
+      <li>Python extracts text page by page</li>
+      <li>Bullets ○ ● □ ■ removed</li>
+      <li>Emojis &amp; symbols stripped</li>
+      <li>Clean .txt returned for download</li>
+      <li>Scanned PDFs not supported</li>
+    </ul>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  const dropZone    = document.getElementById('dropZone');
+  const fileInput   = document.getElementById('fileInput');
+  const fileRow     = document.getElementById('fileRow');
+  const fileNameEl  = document.getElementById('fileNameEl');
+  const fileSizeEl  = document.getElementById('fileSizeEl');
+  const clearBtn    = document.getElementById('clearBtn');
+  const extractBtn  = document.getElementById('extractBtn');
+  const progressWrap= document.getElementById('progressWrap');
+  const progLabel   = document.getElementById('progLabel');
+  const progPct     = document.getElementById('progPct');
+  const progFill    = document.getElementById('progFill');
+  const progStep    = document.getElementById('progStep');
+  const progTime    = document.getElementById('progTime');
+  const statusBox   = document.getElementById('statusBox');
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  // ── State ────────────────────────────────────────────────
+  let selectedFile = null;   // FIXED: store file reference separately from fileInput
+  let blobURL      = null;
+  let dlName       = 'extracted.txt';
+  let clockID      = null;
+  let startMs      = 0;
+
+  // ── Utilities ────────────────────────────────────────────
+  function fmtBytes(b) {
+    if (b < 1024)    return b + ' B';
+    if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+    return (b/1048576).toFixed(1) + ' MB';
+  }
+
+  function setProgress(pct, label, step) {
+    const p = Math.min(Math.max(pct, 0), 100);
+    progFill.style.width = p + '%';
+    progPct.textContent  = Math.round(p) + '%';
+    if (label !== null && label !== undefined) progLabel.textContent = label;
+    if (step  !== null && step  !== undefined) progStep.textContent  = step;
+  }
+
+  function startClock() {
+    startMs = Date.now();
+    clearInterval(clockID);
+    clockID = setInterval(() => {
+      progTime.textContent = ((Date.now() - startMs) / 1000).toFixed(1) + 's';
+    }, 200);
+  }
+
+  function stopClock() {
+    clearInterval(clockID);
+    const elapsed = ((Date.now() - startMs) / 1000).toFixed(1);
+    progTime.textContent = elapsed + 's total';
+  }
+
+  function showStatus(type, msg) {
+    statusBox.className  = 'status-box ' + type;
+    statusBox.textContent = msg;
+  }
+
+  function clearStatus() {
+    statusBox.className  = 'status-box';
+    statusBox.textContent = '';
+  }
+
+  function revokeBlob() {
+    if (blobURL) { URL.revokeObjectURL(blobURL); blobURL = null; }
+  }
+
+  // ── File acceptance ──────────────────────────────────────
+  function acceptFile(file) {
+    if (!file) return;
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+      showStatus('err', 'Only PDF files are accepted (.pdf).');
+      return;
+    }
+    if (file.size > 100 * 1024 * 1024) {
+      showStatus('err', 'File too large — max 100 MB.');
+      return;
+    }
+
+    // Store in our own variable — fixes drag & drop bug
+    selectedFile = file;
+
+    fileNameEl.textContent = file.name;
+    fileSizeEl.textContent = fmtBytes(file.size);
+    fileRow.classList.add('show');
+    extractBtn.classList.add('show');
+    extractBtn.disabled    = false;
+    extractBtn.textContent = 'Extract text →';
+    progressWrap.classList.remove('show');
+    downloadBtn.classList.remove('show');
+    clearStatus();
+    revokeBlob();
+  }
+
+  // Click-to-browse
+  fileInput.addEventListener('change', () => {
+    if (fileInput.files[0]) acceptFile(fileInput.files[0]);
+  });
+
+  // Drag & drop — uses selectedFile variable, NOT fileInput.files
+  dropZone.addEventListener('dragover',  e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+  dropZone.addEventListener('dragleave', e => { e.preventDefault(); dropZone.classList.remove('dragover'); });
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const f = e.dataTransfer.files[0];
+    if (f) acceptFile(f);  // directly passes the dragged file — no assignment to fileInput.files
+  });
+
+  clearBtn.addEventListener('click', () => {
+    selectedFile = null;
+    fileInput.value = '';
+    fileRow.classList.remove('show');
+    extractBtn.classList.remove('show');
+    progressWrap.classList.remove('show');
+    downloadBtn.classList.remove('show');
+    clearStatus();
+    stopClock();
+    revokeBlob();
+  });
+
+  // ── Extract ──────────────────────────────────────────────
+  extractBtn.addEventListener('click', () => {
+    // Use selectedFile (works for both click & drag) — this is the bug fix
+    const file = selectedFile;
+    if (!file) { showStatus('err', 'Please select a PDF file first.'); return; }
+
+    extractBtn.disabled    = true;
+    extractBtn.textContent = 'Working…';
+    downloadBtn.classList.remove('show');
+    clearStatus();
+    progressWrap.classList.add('show');
+    setProgress(0, 'Uploading…', 'Sending to server…');
+    startClock();
+
+    const fd = new FormData();
+    fd.append('pdf_file', file);
+
+    const xhr = new XMLHttpRequest();
+    xhr.responseType = 'arraybuffer';
+    xhr.timeout      = 300000;
+
+    // Real upload progress 0→60%
+    xhr.upload.addEventListener('progress', e => {
+      if (!e.lengthComputable) return;
+      const pct     = (e.loaded / e.total) * 60;
+      const elapsed = (Date.now() - startMs) / 1000 || 0.001;
+      const rate    = e.loaded / elapsed;
+      const left    = rate > 0 ? Math.ceil((e.total - e.loaded) / rate) : 0;
+      const eta     = left > 1 ? '~' + left + 's left' : '';
+      setProgress(pct, 'Uploading…', fmtBytes(e.loaded) + ' / ' + fmtBytes(e.total) + (eta ? '  ' + eta : ''));
+    });
+
+    // Upload done — animate 60→97% during server processing
+    xhr.upload.addEventListener('load', () => {
+      setProgress(60, 'Processing…', 'Extracting and cleaning text…');
+      let cur = 60;
+      xhr._procID = setInterval(() => {
+        cur += (97 - cur) * 0.08;
+        setProgress(cur, 'Processing…', 'Extracting and cleaning text…');
+      }, 350);
+    });
+
+    // Response
+    xhr.addEventListener('load', () => {
+      clearInterval(xhr._procID);
+      stopClock();
+
+      if (xhr.status === 200) {
+        setProgress(100, 'Complete', 'Done ✓');
+
+        const cd    = xhr.getResponseHeader('Content-Disposition') || '';
+        const xf    = xhr.getResponseHeader('X-Filename') || '';
+        const match = cd.match(/filename="?([^";\n]+)"?/);
+        dlName = xf || (match ? match[1] : (selectedFile ? selectedFile.name.replace('.pdf', '_extracted.txt') : 'extracted.txt'));
+
+        revokeBlob();
+        blobURL = URL.createObjectURL(new Blob([xhr.response], { type: 'text/plain;charset=utf-8' }));
+        triggerDownload();
+
+        showStatus('ok', 'Extraction complete. Download started — use the button below if needed.');
+        downloadBtn.classList.add('show');
+        extractBtn.disabled    = false;
+        extractBtn.textContent = 'Extract another →';
+
+      } else {
+        let msg = 'Server error. Please try again.';
+        try {
+          const txt = new TextDecoder('utf-8').decode(new Uint8Array(xhr.response));
+          const obj = JSON.parse(txt);
+          if (obj.error) msg = obj.error;
+        } catch (_) {}
+        progressWrap.classList.remove('show');
+        showStatus('err', msg);
+        extractBtn.disabled    = false;
+        extractBtn.textContent = 'Try again →';
+      }
+    });
+
+    xhr.addEventListener('error', () => {
+      clearInterval(xhr._procID); stopClock();
+      progressWrap.classList.remove('show');
+      showStatus('err', 'Network error — could not reach the server.');
+      extractBtn.disabled    = false;
+      extractBtn.textContent = 'Try again →';
+    });
+
+    xhr.addEventListener('timeout', () => {
+      clearInterval(xhr._procID); stopClock();
+      progressWrap.classList.remove('show');
+      showStatus('err', 'Timed out (5 min). PDF may be very large or server is busy.');
+      extractBtn.disabled    = false;
+      extractBtn.textContent = 'Try again →';
+    });
+
+    xhr.open('POST', '/extract');
+    xhr.send(fd);
+  });
+
+  // ── Download ─────────────────────────────────────────────
+  function triggerDownload() {
+    if (!blobURL) return;
+    const a = document.createElement('a');
+    a.href = blobURL; a.download = dlName;
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(revokeBlob, 600000);
+  }
+
+  downloadBtn.addEventListener('click', () => {
+    if (blobURL) triggerDownload();
+    else showStatus('err', 'No file ready. Please extract again.');
+  });
+
+})();
+</script>
+{% endblock %}

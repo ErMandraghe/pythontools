@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}Python Tools{% endblock %}
+
+{% block extra_styles %}
+.hero {
+  padding: 3rem 0 2.5rem;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 2.5rem;
+}
+.hero-label {
+  font-family: var(--mono);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 0.75rem;
+}
+.hero-title {
+  font-size: clamp(2rem, 5vw, 3.25rem);
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.hero-title strong { font-weight: 600; }
+.hero-sub {
+  margin-top: 0.75rem;
+  font-size: 0.95rem;
+  color: var(--muted);
+  font-weight: 300;
+}
+
+.tools-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  background: var(--border);
+}
+
+.tool-card {
+  background: var(--surface);
+  padding: 1.75rem;
+  transition: background 0.15s;
+  position: relative;
+}
+.tool-card.clickable {
+  text-decoration: none;
+  color: inherit;
+  display: block;
+  cursor: pointer;
+}
+.tool-card.clickable:hover { background: var(--accent-bg); }
+.tool-card.clickable:hover .tool-arrow { opacity: 1; transform: translateX(0); }
+.tool-card.disabled { opacity: 0.45; cursor: default; }
+
+.tool-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 0.75rem; }
+.tool-icon { font-size: 1.25rem; }
+.tool-arrow {
+  font-size: 0.9rem; color: var(--accent);
+  opacity: 0; transform: translateX(-4px);
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.tool-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  color: var(--text);
+}
+.tool-desc {
+  font-size: 0.83rem;
+  color: var(--muted);
+  line-height: 1.55;
+  font-weight: 300;
+}
+.tool-badge {
+  display: inline-block;
+  margin-top: 1.1rem;
+  font-family: var(--mono);
+  font-size: 0.62rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.2rem 0.55rem;
+  border-radius: 2px;
+}
+.tool-badge.ready { background: var(--accent-bg); color: var(--accent); }
+.tool-badge.soon  { background: var(--border); color: var(--muted); }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.hero         { animation: fadeUp 0.3s ease both; }
+.tools-grid   { animation: fadeUp 0.3s 0.08s ease both; opacity: 0; animation-fill-mode: both; }
+{% endblock %}
+
+{% block content %}
+<div class="hero">
+  <p class="hero-label">v1.0 — Server-side utilities</p>
+  <h1 class="hero-title"><strong>Python</strong><br>Tools</h1>
+  <p class="hero-sub">Upload a file. Server processes it. Download the result.</p>
+</div>
+
+<div class="tools-grid">
+  <a href="/extractor" class="tool-card clickable nav-link">
+    <div class="tool-header">
+      <span class="tool-icon">📄</span>
+      <span class="tool-arrow">→</span>
+    </div>
+    <div class="tool-name">PDF Text Extractor</div>
+    <div class="tool-desc">Extract all readable text from a PDF and download it as a clean .txt file. Removes bullets, symbols, and noise.</div>
+    <span class="tool-badge ready">Ready</span>
+  </a>
+
+  <div class="tool-card disabled">
+    <div class="tool-header"><span class="tool-icon">🔄</span></div>
+    <div class="tool-name">File to PDF Converter</div>
+    <div class="tool-desc">Convert documents and images into PDF format server-side.</div>
+    <span class="tool-badge soon">Coming soon</span>
+  </div>
+
+  <div class="tool-card disabled">
+    <div class="tool-header"><span class="tool-icon">⚙️</span></div>
+    <div class="tool-name">More Tools</div>
+    <div class="tool-desc">Additional utilities are in progress.</div>
+    <span class="tool-badge soon">Coming soon</span>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}About — Python Tools{% endblock %}
+
+{% block extra_styles %}
+.page-label { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+.page-title { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 300; letter-spacing: -0.02em; margin-bottom: 2rem; }
+.page-title strong { font-weight: 600; }
+.prose { max-width: 500px; }
+.prose p { font-size: 0.92rem; color: var(--muted); font-weight: 300; line-height: 1.75; margin-bottom: 1rem; }
+.prose strong { color: var(--text); font-weight: 500; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+.page-label, .page-title, .prose { animation: fadeUp 0.3s ease both; }
+{% endblock %}
+
+{% block content %}
+<p class="page-label">About</p>
+<h1 class="page-title"><strong>What</strong> is it?</h1>
+<div class="prose">
+  <p><strong>Python Tools</strong> is a minimal server-side utility hub. Upload a file, a Python script processes it, you download the result.</p>
+  <p>No data is stored. Files are processed entirely in memory and discarded immediately after the response is sent.</p>
+  <p>Built with <strong>Flask</strong>. Hosted on <strong>Render</strong>.</p>
+</div>
+{% endblock %}

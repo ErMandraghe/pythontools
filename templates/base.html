@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>{% block title %}Python Tools{% endblock %}</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:       #F8F8F6;
+      --surface:  #FFFFFF;
+      --border:   #E2E2DE;
+      --border-dark: #C8C8C4;
+      --text:     #111110;
+      --muted:    #888884;
+      --accent:   #1C6BFF;
+      --accent-bg:#EEF3FF;
+      --success:  #16803C;
+      --success-bg:#EDFAF3;
+      --danger:   #C62828;
+      --danger-bg:#FFF1F1;
+      --mono:     'IBM Plex Mono', monospace;
+      --sans:     'IBM Plex Sans', sans-serif;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--sans);
+      font-size: 15px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Page transition */
+    #page-wrap { animation: fadeIn 0.25s ease both; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+    body.leaving #page-wrap { animation: fadeOut 0.15s ease forwards; }
+    @keyframes fadeOut { to { opacity: 0; transform: translateY(-4px); } }
+
+    /* HEADER */
+    header {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(248,248,246,0.95);
+      backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem; height: 56px;
+    }
+
+    .logo {
+      font-family: var(--mono);
+      font-size: 0.85rem;
+      font-weight: 500;
+      letter-spacing: 0.04em;
+      color: var(--text);
+      text-decoration: none;
+    }
+    .logo em { color: var(--accent); font-style: normal; }
+
+    nav { display: flex; gap: 0.125rem; }
+    nav a {
+      font-family: var(--mono);
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      text-decoration: none;
+      padding: 0.35rem 0.75rem;
+      border-radius: 3px;
+      transition: color 0.15s, background 0.15s;
+    }
+    nav a:hover { color: var(--text); background: var(--border); }
+    nav a.active { color: var(--accent); background: var(--accent-bg); }
+
+    /* Mobile nav */
+    @media (max-width: 540px) {
+      header { padding: 0 1rem; }
+      nav a { padding: 0.35rem 0.5rem; font-size: 0.68rem; }
+      .logo { font-size: 0.78rem; }
+    }
+
+    /* MAIN */
+    main {
+      position: relative;
+      min-height: calc(100vh - 56px);
+      padding: 3rem 2rem;
+      max-width: 980px;
+      margin: 0 auto;
+    }
+    @media (max-width: 540px) { main { padding: 2rem 1rem; } }
+
+    {% block extra_styles %}{% endblock %}
+  </style>
+</head>
+<body>
+  <header>
+    <a href="/" class="logo nav-link">python<em>.</em>tools</a>
+    <nav>
+      <a href="/"         class="nav-link {% if request.path == '/' %}active{% endif %}">home</a>
+      <a href="/whatisit" class="nav-link {% if request.path == '/whatisit' %}active{% endif %}">about</a>
+      <a href="/contact"  class="nav-link {% if request.path == '/contact' %}active{% endif %}">contact</a>
+    </nav>
+  </header>
+
+  <div id="page-wrap">
+    <main>{% block content %}{% endblock %}</main>
+  </div>
+
+  <script>
+    document.querySelectorAll('a.nav-link').forEach(link => {
+      link.addEventListener('click', function(e) {
+        const href = this.getAttribute('href');
+        if (!href || href.startsWith('#') || href.startsWith('http')) return;
+        e.preventDefault();
+        document.body.classList.add('leaving');
+        setTimeout(() => { window.location.href = href; }, 160);
+      });
+    });
+  </script>
+</body>
+</html>

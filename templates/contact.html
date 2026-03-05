@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Contact — Python Tools{% endblock %}
+
+{% block extra_styles %}
+.page-label { font-family: var(--mono); font-size: 0.68rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 0.5rem; }
+.page-title { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 300; letter-spacing: -0.02em; margin-bottom: 2rem; }
+.page-title strong { font-weight: 600; }
+.prose { max-width: 500px; }
+.prose p { font-size: 0.92rem; color: var(--muted); font-weight: 300; line-height: 1.75; margin-bottom: 1rem; }
+.prose strong { color: var(--text); font-weight: 500; }
+.prose a { color: var(--accent); text-decoration: none; }
+.prose a:hover { text-decoration: underline; }
+@keyframes fadeUp { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
+.page-label, .page-title, .prose { animation: fadeUp 0.3s ease both; }
+{% endblock %}
+
+{% block content %}
+<p class="page-label">Contact</p>
+<h1 class="page-title"><strong>Get</strong> in touch</h1>
+<div class="prose">
+  <p>Found a bug or have a suggestion for a new tool?</p>
+  <p>Reach out at <strong><a href="mailto:your@email.com">your@email.com</a></strong></p>
+</div>
+{% endblock %}
